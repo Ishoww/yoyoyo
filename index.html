@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rocket League 3D - AI Challenge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #0a0e27;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 18px;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+            z-index: 100;
+        }
+
+        .score-board {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 20px;
+        }
+
+        .team {
+            padding: 10px 20px;
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .team.blue {
+            border-left: 4px solid #00bfff;
+        }
+
+        .team.red {
+            border-left: 4px solid #ff4444;
+        }
+
+        .score {
+            font-size: 32px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 5px;
+            max-width: 300px;
+        }
+
+        .control-item {
+            margin: 5px 0;
+        }
+
+        #timer {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            z-index: 200;
+            border: 2px solid #00bfff;
+        }
+
+        #gameOver h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        #gameOver p {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+
+        .button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #00bfff;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .button:hover {
+            background: #00d4ff;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <div class="score-board">
+            <div class="team blue">
+                <div>Blue Team</div>
+                <div class="score" id="blueScore">0</div>
+            </div>
+            <div class="team red">
+                <div>Red Team</div>
+                <div class="score" id="redScore">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="timer">5:00</div>
+
+    <div id="controls">
+        <div><strong>Controls:</strong></div>
+        <div class="control-item">W/A/S/D - Move</div>
+        <div class="control-item">SPACE - Jump</div>
+        <div class="control-item">SHIFT - Boost</div>
+        <div class="control-item">Mouse - Look Around</div>
+        <div class="control-item">R - Reset Ball</div>
+    </div>
+
+    <div id="gameOver">
+        <h1 id="winner">Blue Team Wins!</h1>
+        <p id="finalScore">Final Score: 3 - 2</p>
+        <button class="button" onclick="location.reload()">Play Again</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cannon@0.20.0/build/cannon.js"></script>
+    <script src="src/physics.js"></script>
+    <script src="src/ai.js"></script>
+    <script src="src/player.js"></script>
+    <script src="src/ball.js"></script>
+    <script src="src/renderer.js"></script>
+    <script src="src/game.js"></script>
+</body>
+</html>
