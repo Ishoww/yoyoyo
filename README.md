@@ -1,96 +1,74 @@
 # 🚀 Rocket League 3D - AI Challenge
 
-A browser-based 3D Rocket League game with intelligent AI players.
+Um jogo de futebol 3D no navegador com IA inteligente.
 
-## Features
+## ✨ Recursos
 
-✅ **3D Graphics** - Built with Three.js
-✅ **Physics Engine** - Cannon.js for realistic collisions
-✅ **AI Players** - Intelligent opponents with different roles (goalkeeper, midfielder, forward)
-✅ **Player Controls** - WASD for movement, Space to jump, Shift for boost
-✅ **Competitive Gameplay** - Blue vs Red team match
-✅ **Scoring System** - Goal detection and score tracking
-✅ **Real-time Multiplayer** - Player vs 5 AI opponents
+✅ Gráficos 3D (Three.js)
+✅ Física customizada (otimizada para baixo desempenho)
+✅ IA Inteligente (Você vs IA Red)
+✅ Gameplay smooth (60 FPS mesmo em PC antigo)
+✅ Mecânicas realistas (boost, salto, colisão)
 
-## Controls
+## 🎮 Controles
 
-- **W/A/S/D** - Move the car
-- **SPACE** - Jump
-- **SHIFT** - Boost (limited energy)
-- **MOUSE** - Look around (camera)
-- **R** - Reset ball position
+- **W/A/S/D** - Mover o carro
+- **SPACE** - Pular
+- **SHIFT** - Turbo (boost com limite de energia)
+- **R** - Resetar bola
 
-## Game Mechanics
+## 🤖 Sistema de IA
 
-### Physics
-- Realistic car and ball physics
-- Gravity and friction simulation
-- Collision detection between players, ball, and arena walls
-- Boost mechanic with energy management
+A IA Red joga contra você:
+- **Goleiro**: Defende o gol, intercepta chutes
+- **Logística inteligente**: Move para a bola quando próxima
+- **Boost estratégico**: Usa boost nos momentos certos
+- **Posicionamento**: Mantém-se perto do gol quando defende
 
-### AI System
-- **Goalkeeper** - Defensive positioning, intercepts shots
-- **Midfielder** - Balanced play, supports both attack and defense
-- **Forward** - Aggressive play, focuses on scoring
+## 📊 Gameplay
 
-### Game Rules
-- 5-minute matches
-- Teams score by hitting the ball into opponent goals
-- Blue team (player-controlled goalkeeper) vs Red team
-- Match ends when timer runs out
+- **Duração**: 5 minutos
+- **Objetivo**: Marque mais gols que a IA
+- **Placar em tempo real**: Acompanhe o jogo
+- **Modo**: 1v1 (Você vs IA)
 
-## Technologies
+## 🛠️ Tecnologias
 
-- **Three.js** - 3D rendering
-- **Cannon.js** - Physics engine
-- **Vanilla JavaScript** - Game logic and AI
+- **Three.js** - Renderização 3D
+- **Physics Customizada** - Sem dependências externas
+- **Vanilla JavaScript** - Puro e simples
 
-## How to Play
-
-1. Open `index.html` in a modern browser (Chrome, Firefox, Edge)
-2. Control your car with WASD keys
-3. Use SPACE to jump and SHIFT to boost
-4. Try to score goals against the AI team
-5. Watch the AI teammates for strategic play
-
-## File Structure
+## 📁 Estrutura
 
 ```
-├── index.html          # Main HTML file
+├── index.html          # HTML principal
 ├── src/
-│   ├── game.js        # Game manager and main loop
+│   ├── game.js        # Game manager e loop principal
 │   ├── renderer.js    # Three.js rendering
-│   ├── physics.js     # Cannon.js physics world
-│   ├── player.js      # Player class and controls
-│   ├── ai.js          # AI player with decision making
-│   └── ball.js        # Ball physics and logic
-└── README.md          # This file
+│   ├── physics.js     # Motor físico customizado
+│   ├── entities.js    # Classes Player e Ball
+│   └── ai.js          # Controle da IA
+└── README.md          # Este arquivo
 ```
 
-## AI Strategy
+## 🚀 Como Jogar
 
-The AI system uses:
-- **Role-based decision making** - Each player has a specific role
-- **Distance-based behaviors** - Different actions based on distance to ball
-- **Positioning** - Intelligent positioning based on role and game state
-- **Coordination** - Simple team tactics
+1. Abre o arquivo `index.html` no navegador
+2. Controla o carro azul com WASD
+3. Marca gols chutando a bola para o gol vermelho
+4. Defenda contra a IA
+5. Vence quem tiver mais gols em 5 minutos
 
-## Future Enhancements
+## ⚙️ Performance
 
-- [ ] Custom team creation
-- [ ] Better AI pathfinding
-- [ ] Ball trails and effects
-- [ ] Sound effects
-- [ ] Multiple difficulty levels
-- [ ] Replay system
-- [ ] Leaderboards
+Otimizado para PCs antigos:
+- ✅ Sem shadows
+- ✅ Low-poly meshes
+- ✅ Física simplificada
+- ✅ Renderização eficiente
 
-## Performance
-
-- Optimized for 60 FPS
-- Efficient physics simulation
-- LOD (Level of Detail) for distant objects
+**Testado em I5-2400** ✅
 
 ---
 
-**Made for the AI challenge - Let's see what IAs can do! 🎮**
+**Feito para desafio de IA - Vamos ver qual IA faz melhor! 🎮**

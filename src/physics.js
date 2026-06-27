@@ -1,73 +1,132 @@
-// Physics Engine Setup
-class PhysicsWorld {
-    constructor() {
-        this.world = new CANNON.World();
-        this.world.gravity.set(0, -9.82, 0);
-        this.world.defaultContactMaterial.friction = 0.3;
-        this.world.defaultContactMaterial.restitution = 0.5;
-        
-        // Create contact materials
-        this.createMaterials();
+// Simple Physics Engine (Custom)
+class Vec3 {
+    constructor(x = 0, y = 0, z = 0) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
     }
 
-    createMaterials() {
-        this.carMaterial = new CANNON.Material('car');
-        this.ballMaterial = new CANNON.Material('ball');
-        this.groundMaterial = new CANNON.Material('ground');
-
-        // Car to Ground
-        const carGround = new CANNON.ContactMaterial(this.carMaterial, this.groundMaterial, {
-            friction: 0.4,
-            restitution: 0.3
-        });
-        this.world.addContactMaterial(carGround);
-
-        // Ball to Ground
-        const ballGround = new CANNON.ContactMaterial(this.ballMaterial, this.groundMaterial, {
-            friction: 0.2,
-            restitution: 0.8
-        });
-        this.world.addContactMaterial(ballGround);
-
-        // Ball to Car
-        const ballCar = new CANNON.ContactMaterial(this.ballMaterial, this.carMaterial, {
-            friction: 0.3,
-            restitution: 0.9
-        });
-        this.world.addContactMaterial(ballCar);
+    clone() {
+        return new Vec3(this.x, this.y, this.z);
     }
 
-    addGround() {
-        const groundShape = new CANNON.Plane();
-        const groundBody = new CANNON.Body({
-            mass: 0,
-            material: this.groundMaterial
-        });
-        groundBody.addShape(groundShape);
-        groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-        this.world.addBody(groundBody);
-        return groundBody;
+    add(v) {
+        this.x += v.x;
+        this.y += v.y;
+        this.z += v.z;
+        return this;
     }
 
-    addWall(x, z, width, height) {
-        const wallShape = new CANNON.Box(new CANNON.Vec3(width / 2, height / 2, 0.5));
-        const wallBody = new CANNON.Body({
-            mass: 0,
-            material: this.groundMaterial
-        });
-        wallBody.addShape(wallShape);
-        wallBody.position.set(x, height / 2, z);
-        this.world.addBody(wallBody);
-        return wallBody;
+    sub(v) {
+        this.x -= v.x;
+        this.y -= v.y;
+        this.z -= v.z;
+        return this;
     }
 
-    step(dt = 1 / 60) {
-        this.world.step(1 / 60, dt, 3);
+    scale(s) {
+        this.x *= s;
+        this.y *= s;
+        this.z *= s;
+        return this;
+    }
+
+    length() {
+        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    }
+
+    normalize() {
+        const len = this.length();
+        if (len > 0) {
+            this.x /= len;
+            this.y /= len;
+            this.z /= len;
+        }
+        return this;
+    }
+
+    distance(v) {
+        const dx = this.x - v.x;
+        const dy = this.y - v.y;
+        const dz = this.z - v.z;
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 }
 
-// Utility to sync Physics with Three.js
-function syncPhysicsToThree(cannonBody, threeObject) {
-    threeObject.position.copy(cannonBody.position);
-    threeObject.quaternion.copy(cannonBody.quaternion);
+class SimplePhysics {
+    constructor() {
+        this.gravity = new Vec3(0, -25, 0);
+        this.bodies = [];
+        this.groundLevel = 0;
+        this.friction = 0.95;
+        this.airFriction = 0.98;
+    }
+
+    addBody(body) {
+        this.bodies.push(body);
+    }
+
+    step(dt = 1 / 60) {
+        // Update all bodies
+        this.bodies.forEach(body => {
+            if (body.mass === 0) return; // Static body
+
+            // Apply gravity
+            if (body.mass > 0) {
+                body.velocity.y += this.gravity.y * dt;
+            }
+
+            // Update position
+            body.position.x += body.velocity.x * dt;
+            body.position.y += body.velocity.y * dt;
+            body.position.z += body.velocity.z * dt;
+
+            // Ground collision
+            if (body.position.y < this.groundLevel) {
+                body.position.y = this.groundLevel;
+                body.velocity.y *= -0.5; // Bounce
+                body.velocity.x *= this.friction;
+                body.velocity.z *= this.friction;
+            } else {
+                // Air friction
+                body.velocity.x *= this.airFriction;
+                body.velocity.z *= this.airFriction;
+            }
+        });
+
+        // Collision detection
+        for (let i = 0; i < this.bodies.length; i++) {
+            for (let j = i + 1; j < this.bodies.length; j++) {
+                this.checkCollision(this.bodies[i], this.bodies[j]);
+            }
+        }
+    }
+
+    checkCollision(a, b) {
+        const dist = a.position.distance(b.position);
+        const minDist = a.radius + b.radius;
+
+        if (dist < minDist) {
+            // Simple collision response
+            const normal = b.position.clone().sub(a.position).normalize();
+            
+            const overlap = minDist - dist;
+            const aVel = a.velocity.clone();
+            const bVel = b.velocity.clone();
+
+            // Separate bodies
+            a.position.sub(normal.clone().scale(overlap / 2));
+            b.position.add(normal.clone().scale(overlap / 2));
+
+            // Exchange velocities
+            if (a.mass > 0 && b.mass > 0) {
+                a.velocity = bVel.scale(0.8);
+                b.velocity = aVel.scale(0.8);
+            } else if (a.mass > 0) {
+                a.velocity = normal.clone().scale(aVel.length() * 0.8);
+            } else if (b.mass > 0) {
+                b.velocity = normal.clone().scale(bVel.length() * 0.8);
+            }
+        }
+    }
 }

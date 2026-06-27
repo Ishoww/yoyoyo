@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,10 +18,14 @@
             overflow: hidden;
         }
 
-        #canvas {
-            display: block;
+        #gameContainer {
             width: 100vw;
             height: 100vh;
+            position: relative;
+        }
+
+        canvas {
+            display: block;
         }
 
         #ui {
@@ -90,7 +94,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.95);
             padding: 40px;
             border-radius: 10px;
             text-align: center;
@@ -124,45 +128,55 @@
         .button:hover {
             background: #00d4ff;
         }
+
+        #fps {
+            position: absolute;
+            top: 20px;
+            right: 250px;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
-    <div id="ui">
-        <div class="score-board">
-            <div class="team blue">
-                <div>Blue Team</div>
-                <div class="score" id="blueScore">0</div>
+    <div id="gameContainer">
+        <div id="ui">
+            <div class="score-board">
+                <div class="team blue">
+                    <div>🔵 Blue (Você)</div>
+                    <div class="score" id="blueScore">0</div>
+                </div>
+                <div class="team red">
+                    <div>🔴 Red (IA)</div>
+                    <div class="score" id="redScore">0</div>
+                </div>
             </div>
-            <div class="team red">
-                <div>Red Team</div>
-                <div class="score" id="redScore">0</div>
-            </div>
+        </div>
+
+        <div id="timer">5:00</div>
+        <div id="fps">FPS: 60</div>
+
+        <div id="controls">
+            <div><strong>⌨️ Controles:</strong></div>
+            <div class="control-item">W/A/S/D - Mover</div>
+            <div class="control-item">SPACE - Pular</div>
+            <div class="control-item">SHIFT - Turbo</div>
+            <div class="control-item">R - Resetar Bola</div>
+        </div>
+
+        <div id="gameOver">
+            <h1 id="winner">Azul Venceu!</h1>
+            <p id="finalScore">Placar Final: 3 - 2</p>
+            <button class="button" onclick="location.reload()">Jogar Novamente</button>
         </div>
     </div>
 
-    <div id="timer">5:00</div>
-
-    <div id="controls">
-        <div><strong>Controls:</strong></div>
-        <div class="control-item">W/A/S/D - Move</div>
-        <div class="control-item">SPACE - Jump</div>
-        <div class="control-item">SHIFT - Boost</div>
-        <div class="control-item">Mouse - Look Around</div>
-        <div class="control-item">R - Reset Ball</div>
-    </div>
-
-    <div id="gameOver">
-        <h1 id="winner">Blue Team Wins!</h1>
-        <p id="finalScore">Final Score: 3 - 2</p>
-        <button class="button" onclick="location.reload()">Play Again</button>
-    </div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/cannon@0.20.0/build/cannon.js"></script>
     <script src="src/physics.js"></script>
+    <script src="src/entities.js"></script>
     <script src="src/ai.js"></script>
-    <script src="src/player.js"></script>
-    <script src="src/ball.js"></script>
     <script src="src/renderer.js"></script>
     <script src="src/game.js"></script>
 </body>
