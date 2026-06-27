@@ -18,19 +18,21 @@ class Car {
         this.angularVel = 0;
 
         // Movement
-        this.maxSpeed = 35;
-        this.boostSpeed = 70;
-        this.acceleration = 60;
+        this.maxSpeed = 30;
+        this.boostSpeed = 60;
+        this.acceleration = 50;
+        this.boostAcceleration = 120; // Boost acceleration
         this.steering = 0.15;
 
         // Boost
         this.boost = 100;
         this.maxBoost = 100;
         this.boostRechargeRate = 50;
+        this.boostDrainRate = 80; // How fast boost drains
         this.isBoosting = false;
 
         // Jump
-        this.jumpForce = 18;
+        this.jumpForce = 12;
         this.jumpCooldown = 0;
         this.canJump = true;
 
@@ -80,10 +82,12 @@ class Car {
         // Handle acceleration
         const accelerationInput = (this.input.forward ? 1 : 0) - (this.input.backward ? 1 : 0);
         
-        const currentMaxSpeed = this.input.boost && this.boost > 0 ? this.boostSpeed : this.maxSpeed;
+        const isBoosting = this.input.boost && this.boost > 0;
+        const currentMaxSpeed = isBoosting ? this.boostSpeed : this.maxSpeed;
+        const currentAcceleration = isBoosting ? this.boostAcceleration : this.acceleration;
         
         if (accelerationInput !== 0) {
-            const accel = forward.clone().scale(accelerationInput * this.acceleration);
+            const accel = forward.clone().scale(accelerationInput * currentAcceleration);
             this.velocity.x += accel.x * dt;
             this.velocity.z += accel.z * dt;
 
@@ -96,8 +100,8 @@ class Car {
             }
 
             // Boost consumption
-            if (this.input.boost && this.boost > 0) {
-                this.boost -= 60 * dt;
+            if (isBoosting) {
+                this.boost = Math.max(0, this.boost - this.boostDrainRate * dt);
                 this.isBoosting = true;
             } else {
                 this.isBoosting = false;

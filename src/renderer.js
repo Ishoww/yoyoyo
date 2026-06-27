@@ -3,7 +3,8 @@ class Renderer {
     constructor() {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x0a1929);
-        this.scene.fog = new THREE.Fog(0x0a1929, 200, 500);
+        // Remove fog para não ter parede verde
+        // this.scene.fog = new THREE.Fog(0x0a1929, 200, 500);
 
         this.camera = new THREE.PerspectiveCamera(
             75,
@@ -47,22 +48,22 @@ class Renderer {
     }
 
     createArena() {
-        // Ground
-        const groundGeo = new THREE.PlaneGeometry(100, 60);
+        // Ground - MAIOR agora
+        const groundGeo = new THREE.PlaneGeometry(150, 100);
         const groundMat = new THREE.MeshLambertMaterial({ color: 0x1a4d4d });
         const ground = new THREE.Mesh(groundGeo, groundMat);
         ground.rotation.x = -Math.PI / 2;
         ground.position.y = -0.01;
         this.scene.add(ground);
 
-        // Walls
-        this.createWall(-51, 0, 60, 30, 0x1a1a2e);
-        this.createWall(51, 0, 60, 30, 0x1a1a2e);
-        this.createWall(0, -31, 100, 30, 0x0f2027);
-        this.createWall(0, 31, 100, 30, 0x0f2027);
+        // Walls - mais distantes
+        this.createWall(-55, 0, 100, 35, 0x1a1a2e);
+        this.createWall(55, 0, 100, 35, 0x1a1a2e);
+        this.createWall(0, -35, 150, 35, 0x0f2027);
+        this.createWall(0, 35, 150, 35, 0x0f2027);
 
         // Center line
-        this.createLine(0, 0, 0.2, 60, 0xffffff);
+        this.createLine(0, 0, 0.2, 100, 0xffffff);
 
         // Goal areas
         const goalGeo = new THREE.PlaneGeometry(15, 25);
