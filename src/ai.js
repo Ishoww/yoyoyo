@@ -1,80 +1,98 @@
-// AI Logic
-class AIController {
-    constructor(player, ballRef) {
-        this.player = player;
+// AI Controller
+class AI {
+    constructor(car, ballRef) {
+        this.car = car;
         this.ballRef = ballRef;
         this.decisionTimer = 0;
-        this.decisionInterval = 0.2;
+        this.decisionInterval = 0.3;
         this.targetPos = new Vec3(0, 0, 0);
-        this.isGoalkeeper = player.isAI && player.team === 'red';
+        this.mode = 'chase'; // chase, defend, position
+        this.difficulty = 'hard';
     }
 
-    update(dt, ballPos) {
+    update(dt, ball, playerCar) {
         this.decisionTimer += dt;
 
         if (this.decisionTimer >= this.decisionInterval) {
-            this.makeDecision(ballPos);
+            this.makeDecision(ball, playerCar);
             this.decisionTimer = 0;
         }
 
-        this.moveToTarget();
+        this.executeMoves();
     }
 
-    makeDecision(ballPos) {
-        const distToBall = this.player.position.distance(ballPos);
+    makeDecision(ball, playerCar) {
+        const distToBall = this.car.position.distance(ball.position);
+        const ballX = ball.position.x;
+        const ballZ = ball.position.z;
 
-        if (this.isGoalkeeper) {
-            // Goalkeeper logic
-            const goalX = 40; // Red goal
-            this.targetPos = new Vec3(goalX, 0, Math.max(-15, Math.min(15, ballPos.z)));
+        // Decide mode
+        if (distToBall < 25) {
+            this.mode = 'chase';
+            this.targetPos = ball.position.clone();
 
-            if (distToBall < 20) {
-                this.targetPos = ballPos.clone();
-                if (distToBall < 5) {
-                    this.player.input.boost = true;
-                }
+            // Boost if close
+            if (distToBall < 15 && this.car.boost > 30) {
+                this.car.input.boost = true;
+            } else {
+                this.car.input.boost = false;
+            }
+
+            // Jump to hit ball
+            if (distToBall < 8 && Math.random() < 0.25) {
+                this.car.input.jump = true;
             }
         } else {
-            // Outfield AI
-            if (distToBall < 30) {
-                this.targetPos = ballPos.clone();
-                if (distToBall < 10 && Math.random() < 0.3) {
-                    this.player.input.boost = true;
-                }
-                if (distToBall < 8 && Math.random() < 0.2) {
-                    this.player.input.jump = true;
-                }
-            } else {
-                // Position towards opponent goal
-                const opponentGoalX = -40;
-                this.targetPos = new Vec3(opponentGoalX, 0, Math.sin(Date.now() / 1000) * 10);
-            }
+            this.mode = 'position';
+            this.car.input.boost = false;
+
+            // Position between ball and goal
+            const myGoalX = this.car.team === 'red' ? 40 : -40;
+            const defenseX = myGoalX * 0.7; // 70% towards goal
+            const targetZ = ballZ * 0.5; // Slightly towards ball
+
+            this.targetPos = new Vec3(defenseX, 0, Math.max(-20, Math.min(20, targetZ)));
+        }
+
+        // Defensive boost
+        if (this.mode === 'position' && Math.random() < 0.1) {
+            this.car.input.boost = this.car.boost > 50;
         }
     }
 
-    moveToTarget() {
-        const direction = this.targetPos.clone().sub(this.player.position);
-        const distance = direction.length();
+    executeMoves() {
+        const dir = this.targetPos.clone().sub(this.car.position);
+        const dist = dir.length();
 
-        if (distance < 2) {
-            this.player.input.forward = false;
-            this.player.input.backward = false;
-            this.player.input.left = false;
-            this.player.input.right = false;
+        if (dist < 3) {
+            this.car.input.forward = false;
+            this.car.input.backward = false;
+            this.car.input.left = false;
+            this.car.input.right = false;
             return;
         }
 
-        // Simple movement towards target
-        if (Math.abs(direction.x) > Math.abs(direction.z)) {
-            this.player.input.left = direction.x < 0;
-            this.player.input.right = direction.x > 0;
-            this.player.input.forward = false;
-            this.player.input.backward = false;
-        } else {
-            this.player.input.forward = direction.z > 0;
-            this.player.input.backward = direction.z < 0;
-            this.player.input.left = false;
-            this.player.input.right = false;
-        }
+        dir.normalize();
+
+        // Convert direction to local forward/right
+        const forward = new Vec3(
+            Math.sin(this.car.angle),
+            0,
+            Math.cos(this.car.angle)
+        );
+        const right = new Vec3(
+            Math.cos(this.car.angle),
+            0,
+            -Math.sin(this.car.angle)
+        );
+
+        const forwardDot = dir.dot(forward);
+        const rightDot = dir.dot(right);
+
+        // Movement
+        this.car.input.forward = forwardDot > 0.3;
+        this.car.input.backward = forwardDot < -0.3;
+        this.car.input.right = rightDot > 0.3;
+        this.car.input.left = rightDot < -0.3;
     }
 }

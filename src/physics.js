@@ -1,80 +1,25 @@
-// Simple Physics Engine (Custom)
-class Vec3 {
-    constructor(x = 0, y = 0, z = 0) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-
-    clone() {
-        return new Vec3(this.x, this.y, this.z);
-    }
-
-    add(v) {
-        this.x += v.x;
-        this.y += v.y;
-        this.z += v.z;
-        return this;
-    }
-
-    sub(v) {
-        this.x -= v.x;
-        this.y -= v.y;
-        this.z -= v.z;
-        return this;
-    }
-
-    scale(s) {
-        this.x *= s;
-        this.y *= s;
-        this.z *= s;
-        return this;
-    }
-
-    length() {
-        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
-    }
-
-    normalize() {
-        const len = this.length();
-        if (len > 0) {
-            this.x /= len;
-            this.y /= len;
-            this.z /= len;
-        }
-        return this;
-    }
-
-    distance(v) {
-        const dx = this.x - v.x;
-        const dy = this.y - v.y;
-        const dz = this.z - v.z;
-        return Math.sqrt(dx * dx + dy * dy + dz * dz);
-    }
-}
-
-class SimplePhysics {
+// Physics Engine Simples mas Efetivo
+class Physics {
     constructor() {
-        this.gravity = new Vec3(0, -25, 0);
+        this.gravity = -25;
         this.bodies = [];
         this.groundLevel = 0;
-        this.friction = 0.95;
-        this.airFriction = 0.98;
+        this.damping = 0.98;
+        this.angularDamping = 0.95;
     }
 
     addBody(body) {
         this.bodies.push(body);
+        return body;
     }
 
-    step(dt = 1 / 60) {
-        // Update all bodies
-        this.bodies.forEach(body => {
-            if (body.mass === 0) return; // Static body
+    step(dt) {
+        // Update positions
+        for (let body of this.bodies) {
+            if (body.mass <= 0) continue;
 
             // Apply gravity
-            if (body.mass > 0) {
-                body.velocity.y += this.gravity.y * dt;
-            }
+            body.velocity.y += this.gravity * dt;
 
             // Update position
             body.position.x += body.velocity.x * dt;
@@ -82,50 +27,68 @@ class SimplePhysics {
             body.position.z += body.velocity.z * dt;
 
             // Ground collision
-            if (body.position.y < this.groundLevel) {
-                body.position.y = this.groundLevel;
-                body.velocity.y *= -0.5; // Bounce
-                body.velocity.x *= this.friction;
-                body.velocity.z *= this.friction;
+            if (body.position.y <= body.radius) {
+                body.position.y = body.radius;
+                body.velocity.y *= -body.bounce;
+                body.velocity.x *= body.friction;
+                body.velocity.z *= body.friction;
+                body.onGround = true;
             } else {
-                // Air friction
-                body.velocity.x *= this.airFriction;
-                body.velocity.z *= this.airFriction;
+                body.onGround = false;
+                // Air damping
+                body.velocity.x *= this.damping;
+                body.velocity.z *= this.damping;
             }
-        });
+
+            // Bounds check (out of map)
+            if (body.position.y < -50) {
+                if (body.reset) body.reset();
+            }
+        }
 
         // Collision detection
         for (let i = 0; i < this.bodies.length; i++) {
             for (let j = i + 1; j < this.bodies.length; j++) {
-                this.checkCollision(this.bodies[i], this.bodies[j]);
+                this.collide(this.bodies[i], this.bodies[j]);
             }
         }
     }
 
-    checkCollision(a, b) {
+    collide(a, b) {
         const dist = a.position.distance(b.position);
         const minDist = a.radius + b.radius;
 
-        if (dist < minDist) {
-            // Simple collision response
-            const normal = b.position.clone().sub(a.position).normalize();
-            
+        if (dist < minDist && dist > 0.001) {
             const overlap = minDist - dist;
-            const aVel = a.velocity.clone();
-            const bVel = b.velocity.clone();
+            const normal = b.position.clone().sub(a.position).normalize();
 
-            // Separate bodies
-            a.position.sub(normal.clone().scale(overlap / 2));
-            b.position.add(normal.clone().scale(overlap / 2));
-
-            // Exchange velocities
+            // Separate
             if (a.mass > 0 && b.mass > 0) {
-                a.velocity = bVel.scale(0.8);
-                b.velocity = aVel.scale(0.8);
+                a.position.sub(normal.clone().scale(overlap / 2));
+                b.position.add(normal.clone().scale(overlap / 2));
             } else if (a.mass > 0) {
-                a.velocity = normal.clone().scale(aVel.length() * 0.8);
+                a.position.sub(normal.clone().scale(overlap));
             } else if (b.mass > 0) {
-                b.velocity = normal.clone().scale(bVel.length() * 0.8);
+                b.position.add(normal.clone().scale(overlap));
+            }
+
+            // Impulse
+            const relVel = b.velocity.clone().sub(a.velocity);
+            const velAlongNormal = relVel.dot(normal);
+
+            if (velAlongNormal < 0) {
+                const restitution = 0.8;
+                let impulse = -(1 + restitution) * velAlongNormal;
+
+                if (a.mass > 0 && b.mass > 0) {
+                    impulse /= (a.mass + b.mass);
+                    a.velocity.sub(normal.clone().scale(impulse * a.mass));
+                    b.velocity.add(normal.clone().scale(impulse * b.mass));
+                } else if (a.mass > 0) {
+                    a.velocity.sub(normal.clone().scale(impulse));
+                } else if (b.mass > 0) {
+                    b.velocity.add(normal.clone().scale(impulse));
+                }
             }
         }
     }

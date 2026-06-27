@@ -1,119 +1,134 @@
 // Main Game Class
 class Game {
     constructor() {
-        this.renderer = new GameRenderer();
-        this.physics = new SimplePhysics();
+        this.renderer = new Renderer();
+        this.physics = new Physics();
 
-        // Create players
-        this.playerBlue = new Player('blue', -10, 0, false);
-        this.playerRed = new Player('red', 10, 0, true);
+        // Create cars
+        this.playerCar = new Car('blue', -35, 0, false);
+        this.aiCar = new Car('red', 35, 0, true);
 
-        this.physics.addBody(this.playerBlue);
-        this.physics.addBody(this.playerRed);
+        this.physics.addBody(this.playerCar);
+        this.physics.addBody(this.aiCar);
 
         // Create ball
         this.ball = new Ball();
         this.physics.addBody(this.ball);
 
         // AI Controller
-        this.aiController = new AIController(this.playerRed, this.ball);
+        this.ai = new AI(this.aiCar, this.ball);
 
         // Create meshes
-        this.playerBlue.mesh = this.renderer.createPlayerMesh('blue');
-        this.playerRed.mesh = this.renderer.createPlayerMesh('red');
+        this.playerCar.mesh = this.renderer.createCarMesh('blue');
+        this.aiCar.mesh = this.renderer.createCarMesh('red');
         this.ball.mesh = this.renderer.createBallMesh();
 
-        this.renderer.scene.add(this.playerBlue.mesh);
-        this.renderer.scene.add(this.playerRed.mesh);
+        this.renderer.scene.add(this.playerCar.mesh);
+        this.renderer.scene.add(this.aiCar.mesh);
         this.renderer.scene.add(this.ball.mesh);
 
         // Game state
         this.score = { blue: 0, red: 0 };
         this.gameTime = 300; // 5 minutes
         this.gameActive = true;
-        this.lastFrameTime = Date.now();
+        this.lastTime = Date.now();
         this.frameCount = 0;
-        this.fpsUpdateTime = 0;
+        this.fpsTime = 0;
 
-        this.setupInputHandlers();
-        this.animate();
+        this.setupControls();
+        this.gameLoop();
     }
 
-    setupInputHandlers() {
-        // Keyboard input for player
+    setupControls() {
         document.addEventListener('keydown', (e) => {
             const key = e.key.toLowerCase();
-            if (key === 'w') this.playerBlue.input.forward = true;
-            if (key === 'a') this.playerBlue.input.left = true;
-            if (key === 's') this.playerBlue.input.backward = true;
-            if (key === 'd') this.playerBlue.input.right = true;
+            if (key === 'w') this.playerCar.input.forward = true;
+            if (key === 's') this.playerCar.input.backward = true;
+            if (key === 'a') this.playerCar.input.left = true;
+            if (key === 'd') this.playerCar.input.right = true;
             if (key === ' ') {
                 e.preventDefault();
-                this.playerBlue.input.jump = true;
+                this.playerCar.input.jump = true;
             }
-            if (key === 'shift') this.playerBlue.input.boost = true;
-            if (key === 'r') this.ball.reset();
+            if (key === 'shift') this.playerCar.input.boost = true;
+            if (key === 'r') this.resetGame();
         });
 
         document.addEventListener('keyup', (e) => {
             const key = e.key.toLowerCase();
-            if (key === 'w') this.playerBlue.input.forward = false;
-            if (key === 'a') this.playerBlue.input.left = false;
-            if (key === 's') this.playerBlue.input.backward = false;
-            if (key === 'd') this.playerBlue.input.right = false;
-            if (key === ' ') this.playerBlue.input.jump = false;
-            if (key === 'shift') this.playerBlue.input.boost = false;
+            if (key === 'w') this.playerCar.input.forward = false;
+            if (key === 's') this.playerCar.input.backward = false;
+            if (key === 'a') this.playerCar.input.left = false;
+            if (key === 'd') this.playerCar.input.right = false;
+            if (key === ' ') this.playerCar.input.jump = false;
+            if (key === 'shift') this.playerCar.input.boost = false;
         });
     }
 
     checkGoals() {
-        // Blue scores (ball past red goal at x > 45)
-        if (this.ball.position.x > 45 && Math.abs(this.ball.position.z) < 10) {
+        const ballX = this.ball.position.x;
+        const ballZ = this.ball.position.z;
+        const ballY = this.ball.position.y;
+
+        // Blue goal (x > 42)
+        if (ballX > 42 && Math.abs(ballZ) < 12.5 && ballY < 5) {
             this.score.blue++;
             this.ball.reset();
+            this.playerCar.reset();
+            this.aiCar.reset();
         }
 
-        // Red scores (ball past blue goal at x < -45)
-        if (this.ball.position.x < -45 && Math.abs(this.ball.position.z) < 10) {
+        // Red goal (x < -42)
+        if (ballX < -42 && Math.abs(ballZ) < 12.5 && ballY < 5) {
             this.score.red++;
             this.ball.reset();
+            this.playerCar.reset();
+            this.aiCar.reset();
         }
+    }
+
+    resetGame() {
+        this.ball.reset();
+        this.playerCar.reset();
+        this.aiCar.reset();
     }
 
     updateUI() {
         document.getElementById('blueScore').textContent = this.score.blue;
         document.getElementById('redScore').textContent = this.score.red;
 
-        const minutes = Math.floor(this.gameTime / 60);
-        const seconds = Math.floor(this.gameTime % 60);
-        document.getElementById('timer').textContent =
-            `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        const min = Math.floor(this.gameTime / 60);
+        const sec = Math.floor(this.gameTime % 60);
+        document.getElementById('timer').textContent = `${min}:${sec.toString().padStart(2, '0')}`;
 
-        // Update FPS
-        this.fpsUpdateTime += 1 / 60;
-        if (this.fpsUpdateTime >= 1) {
+        // Boost bar
+        const boostPercent = (this.playerCar.boost / this.playerCar.maxBoost) * 100;
+        document.getElementById('boostFill').style.width = boostPercent + '%';
+
+        // FPS
+        this.fpsTime += 1 / 60;
+        if (this.fpsTime >= 1) {
             document.getElementById('fps').textContent = `FPS: ${this.frameCount}`;
             this.frameCount = 0;
-            this.fpsUpdateTime = 0;
+            this.fpsTime = 0;
         }
     }
 
     endGame() {
         this.gameActive = false;
-        const gameOverDiv = document.getElementById('gameOver');
-        const winner = this.score.blue > this.score.red ? '🔵 Azul' : '🔴 Vermelho';
-        document.getElementById('winner').textContent = `${winner} Venceu!`;
+        const winner = this.score.blue > this.score.red ? '🔵 VOCÊ VENCEU!' : '🔴 IA VENCEU!';
+        document.getElementById('winner').textContent = winner;
         document.getElementById('finalScore').textContent =
-            `Placar Final: ${this.score.blue} - ${this.score.red}`;
-        gameOverDiv.style.display = 'block';
+            `PLACAR FINAL: ${this.score.blue} - ${this.score.red}`;
+        document.getElementById('gameOver').style.display = 'block';
     }
 
-    animate() {
-        requestAnimationFrame(() => this.animate());
+    gameLoop() {
+        requestAnimationFrame(() => this.gameLoop());
 
         const now = Date.now();
-        const dt = Math.min((now - this.lastFrameTime) / 1000, 1 / 30);
-        this.lastFrameTime = now;
+        const dt = Math.min((now - this.lastTime) / 1000, 0.02);
+        this.lastTime = now;
 
         if (!this.gameActive) return;
 
@@ -124,29 +139,29 @@ class Game {
             return;
         }
 
-        // Update players
-        this.playerBlue.update(dt);
-        this.playerRed.update(dt);
+        // Update cars
+        this.playerCar.update(dt);
+        this.aiCar.update(dt);
 
         // Update AI
-        this.aiController.update(dt, this.ball.position);
+        this.ai.update(dt, this.ball, this.playerCar);
 
         // Update ball
         this.ball.update(dt);
 
-        // Physics simulation
+        // Physics
         this.physics.step(dt);
 
-        // Check for goals
+        // Check goals
         this.checkGoals();
 
         // Update meshes
-        this.renderer.updatePlayerMesh(this.playerBlue.mesh, this.playerBlue);
-        this.renderer.updatePlayerMesh(this.playerRed.mesh, this.playerRed);
+        this.renderer.updateCarMesh(this.playerCar.mesh, this.playerCar);
+        this.renderer.updateCarMesh(this.aiCar.mesh, this.aiCar);
         this.renderer.updateBallMesh(this.ball.mesh, this.ball);
 
         // Update camera
-        this.renderer.updateCamera(this.playerBlue.position);
+        this.renderer.updateCamera(this.playerCar);
 
         // Update UI
         this.updateUI();
@@ -157,7 +172,7 @@ class Game {
     }
 }
 
-// Start game
+// Start
 window.addEventListener('load', () => {
     new Game();
 });
