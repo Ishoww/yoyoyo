@@ -48,7 +48,7 @@ class Renderer {
     }
 
     createArena() {
-        // Ground - MAIOR agora
+        // Ground
         const groundGeo = new THREE.PlaneGeometry(150, 100);
         const groundMat = new THREE.MeshLambertMaterial({ color: 0x1a4d4d });
         const ground = new THREE.Mesh(groundGeo, groundMat);
@@ -56,13 +56,13 @@ class Renderer {
         ground.position.y = -0.01;
         this.scene.add(ground);
 
-        // Walls - mais distantes
-        this.createWall(-55, 0, 100, 35, 0x1a1a2e);
-        this.createWall(55, 0, 100, 35, 0x1a1a2e);
-        this.createWall(0, -35, 150, 35, 0x0f2027);
-        this.createWall(0, 35, 150, 35, 0x0f2027);
+        // Walls - apenas as laterais e fundos (SEM parede do meio)
+        this.createWall(-55, 0, 100, 35, 0x1a1a2e); // Esquerda
+        this.createWall(55, 0, 100, 35, 0x1a1a2e);  // Direita
+        this.createWall(0, -35, 150, 35, 0x0f2027); // Fundo
+        this.createWall(0, 35, 150, 35, 0x0f2027);  // Frente
 
-        // Center line
+        // Center line (visual apenas, sem colisão)
         this.createLine(0, 0, 0.2, 100, 0xffffff);
 
         // Goal areas
